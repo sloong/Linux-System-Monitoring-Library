@@ -20,6 +20,7 @@ public:
     static bool isDeviceOnline(std::string address);
     static std::string getOSVersion_Signature(void);
     static std::string getOsVersionString(void);
+    static std::string getIFaceMacAddress(std::string deviceName);
     static int killProcessById(int pid, const std::string& procName);
     static int getProcIdByName(const std::string& procName);
     static bool startAppAsDaemon();

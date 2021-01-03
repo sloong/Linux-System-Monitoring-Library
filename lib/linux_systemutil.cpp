@@ -245,3 +245,14 @@ uint32_t linuxUtil::getNumOfThreadsByPID(int Pid) {
     }
     return Threads;
 }
+
+std::string linuxUtil::getIFaceMacAddress(std::string deviceName) {
+    const std::string sysClassPath = "/sys/class/net/";
+
+    uint32_t Threads = 0;
+    std::ifstream IFaceFile;
+    IFaceFile.open(sysClassPath + deviceName + "/address");
+    std::string line;
+    std::getline(IFaceFile, line);
+    return line;
+}

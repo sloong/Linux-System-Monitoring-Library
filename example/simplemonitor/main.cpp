@@ -16,6 +16,7 @@
 #include "lib/util/record_value.hpp"
 #include "lib/util/timer.hpp"
 #include <thread>
+#include <lib/linux_systemutil.hpp>
 
 
 std::atomic_bool run;
@@ -44,6 +45,10 @@ int main(int argc, char *argv[]) {
     auto ethernetMonitoring = networkLoad::createLinuxEthernetScanList();
 
     cpuMonitoring->initMultiCore();
+    for(auto elem: ethernetMonitoring) {
+        std::cout << "get Mac adr of dev: " << elem->getDeviceName() << " : " << linuxUtil::getIFaceMacAddress(elem.get()->getDeviceName()) << std::endl;
+    }
+
 
 
     auto recordTest = std::make_unique<recordValue<double>>(std::chrono::hours(1), std::chrono::seconds(1));
