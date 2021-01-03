@@ -177,7 +177,7 @@ Main aim of this example, is to show how to interact with the library. The app l
 
 # Get in Contact: 
 If there are any Bugs or Requests for extensions or features, feel free to
-[email me](fuxeysolution@gmail.com) :austria: .
+[email me](mailto:fuxeysolution@gmail.com) :austria: .
 
 
 #### Used 3rdparty libs(for the examples):
