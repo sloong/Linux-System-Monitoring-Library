@@ -60,7 +60,6 @@ class Timer : ITimerSubject {
     class TimerObservable : public IObservable {
     public:
         ~TimerObservable() override {
-            std::cout << "destroy TimerObservable: " << this << std::endl;
         };
 
         TimerObservable(ITimerObserver *observer, timer_mode mode, std::chrono::milliseconds ms) :
@@ -69,7 +68,6 @@ class Timer : ITimerSubject {
                 interval(ms),
                 isFinish(false) {
             this->nextExecution = std::chrono::system_clock::now() + ms;
-            std::cout << "create TimerObservable: " << this << std::endl;
         }
 
 
@@ -105,7 +103,6 @@ class Timer : ITimerSubject {
     class SlotObservable : public IObservable {
     public:
         ~SlotObservable() override {
-            std::cout << "destroy SlotObservable: " << this << std::endl;
         }
 
         SlotObservable(slot fPointer, timer_mode mode, std::chrono::milliseconds ms) :
@@ -115,7 +112,6 @@ class Timer : ITimerSubject {
                 isFinish(false) {
 
             this->nextExecution = std::chrono::system_clock::now() + ms;
-            std::cout << "create SlotObservable: " << this << std::endl;
         }
 
         void notify() override {
@@ -159,13 +155,11 @@ class Timer : ITimerSubject {
     class FutureObservable : public IObservable {
     public:
         ~FutureObservable() override {
-            std::cout << "destroy FutureObservable: " << this << std::endl;
         }
 
         FutureObservable(slot fPointer, std::shared_future<bool> sfuture) : sfut(std::move(sfuture)),
                                                                             functionPointer(std::move(fPointer)),
                                                                             isFinish(false) {
-            std::cout << "create Futurebservable: " << this << std::endl;
         }
 
         void notify() override {
