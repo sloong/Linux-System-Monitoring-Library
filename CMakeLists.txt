@@ -46,7 +46,7 @@ include_directories(${CMAKE_CURRENT_LIST_DIR}/thirdparty/uWebSockets/uSockets)
 
 
 
-include(lib/CMakeLists.txt)
-include(tests/CMakeLists.txt)
-include(example/LinuxSystemMonitor_WebsocketService/CMakeLists.txt)
-include(example/simplemonitor/CMakeLists.txt)
+include(${CMAKE_CURRENT_LIST_DIR}/lib/CMakeLists.txt)
+include(${CMAKE_CURRENT_LIST_DIR}/tests/CMakeLists.txt)
+include(${CMAKE_CURRENT_LIST_DIR}/example/LinuxSystemMonitor_WebsocketService/CMakeLists.txt)
+include(${CMAKE_CURRENT_LIST_DIR}/example/simplemonitor/CMakeLists.txt)
