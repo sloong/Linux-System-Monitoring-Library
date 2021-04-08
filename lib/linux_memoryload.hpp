@@ -18,10 +18,10 @@ public:
                         std::string memInfoOfProcessPrefix = "/proc/self/"):
                         totalMemoryInKB(0),
                         currentMemoryUsageInKB(0),
-                         memInfoFile(std::move(memInfo)),
-                         memInfoOfProcessFile(std::move(memInfoOfProcess)),
-                         memInfoOfProcessPrefixFile(std::move(memInfoOfProcessPrefix))
-                          {};
+                        memInfoFile(std::move(memInfo)),
+                        memInfoOfProcessFile(std::move(memInfoOfProcess)),
+                        memInfoOfProcessPrefixFile(std::move(memInfoOfProcessPrefix))
+                        {};
     //memory
     uint64_t getTotalMemoryInKB();
     uint64_t getCurrentMemUsageInKB();
