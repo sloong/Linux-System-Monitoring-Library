@@ -226,6 +226,7 @@ public:
         for (auto it = this->v_observables.begin(); it != this->v_observables.end(); it++) {
             this->v_observables.erase(it--);
         }
+        this->b_isRunning = false;
     }
 
     static void stop() {
