@@ -48,34 +48,20 @@ float memoryLoad::getCurrentMemUsageInPercent() {
 }
 
 uint64_t memoryLoad::getMemoryUsageByThisProcess() {
-    uint64_t MemFree = 0;
-    std::ifstream memoryFile;
-    memoryFile.open(this->memInfoOfProcessFile);
-    std::string line;
-    while (std::getline(memoryFile, line)) {
-        sscanf(line.c_str(), "VmSize: %lu", &MemFree);
-    }
-    return MemFree;
+    return this->parseProcessMemoryFile(this->memInfoOfProcessFile);
 }
-
-/*
- * VmPeak: Peak virtual memory size.
- * VmSize: Virtual memory size.
- * VmLck: Locked memory size (see mlock(3)).
- * VmHWM: Peak resident set size ("high water mark").
- * VmRSS: Resident set size.
- * VmData, VmStk, VmExe: Size of data, stack, and text segments.
- */
 
 uint64_t memoryLoad::getMemoryUsedByProcess(int pid) {
+    return memoryLoad::parseProcessMemoryFile("/proc/" + std::to_string(pid) + "/status");
+}
 
+uint64_t memoryLoad::parseProcessMemoryFile(std::string fileToParse) {
     uint64_t MemFree = 0;
     std::ifstream memoryFile;
-    memoryFile.open(this->memInfoOfProcessPrefixFile + std::to_string(pid));
+    memoryFile.open(fileToParse);
     std::string line;
     while (std::getline(memoryFile, line)) {
         sscanf(line.c_str(), "VmSize: %lu", &MemFree);
     }
     return MemFree;
 }
-

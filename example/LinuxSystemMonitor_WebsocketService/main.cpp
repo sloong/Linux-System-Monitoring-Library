@@ -136,7 +136,7 @@ private:
                     }
             }).listen(this->portToListen, [&](us_listen_socket_t *token) {
                 if (token) {
-                    std::cout << "WebsocketServer Listening on port "
+                    std::cout << "Secure WebsocketServer Listening on port "
                               << this->portToListen
                               << " with route "
                               << route << std::endl;
@@ -172,14 +172,14 @@ private:
                     }
             }).listen(this->portToListen, [&](us_listen_socket_t *token) {
                 if (token) {
-                    std::cout << "WebsocketServer Listening on port "
+                    std::cout << "Unsecure WebsocketServer Listening on port "
                               << this->portToListen
                               << " with route "
                               << route << std::endl;
                 }
             }).run();
         }
-        std::cerr << "undefined behaviour";
+        std::cerr << "undefined behaviour" << std::endl;
     }
 
 
@@ -225,7 +225,7 @@ int main(int argc, const char *argv[]) {
             ("d,debug", "Enable debugging")
             ("c,public_cert", "path to public cert", cxxopts::value<std::string>()->default_value(""))
             ("k,private_key", "path to private key", cxxopts::value<std::string>()->default_value(""))
-            ("p,websocketport_num", "Port to listen on", cxxopts::value<int>()->default_value("4002"))
+            ("p,websocketport_num", "Port to listen on", cxxopts::value<int>()->default_value("4004"))
             ("i,sendInterval", "sendInterval where data sent out in milliseconds",
              cxxopts::value<int>()->default_value("1000"))
             ("f,json", "File name", cxxopts::value<std::string>())

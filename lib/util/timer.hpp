@@ -118,11 +118,15 @@ class Timer : ITimerSubject {
             if (std::chrono::system_clock::now() >= this->nextExecution) {
                 //this->isFinished = this->promise.get_future();
                  auto p = std::async(std::launch::async, [this] {
-                     if (this->functionPointer != nullptr) {
-                         this->functionPointer();
-                         this->promise.set_value(true);
+                     try {
+                         if (this->functionPointer != nullptr) {
+                             this->functionPointer();
+                             this->promise.set_value(true);
+                         }
+                         this->promise.set_value(false);
+                     } catch(std::future_error &e) {
+                        std::cout << "future already satisfied" << e.what() << std::endl;
                      }
-                    this->promise.set_value(false);
                 });
                 if (this->timerMode == continuous) {
                     this->nextExecution = std::chrono::system_clock::now() + interval;

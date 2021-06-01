@@ -39,8 +39,7 @@ void linuxsysmonitor::init(const std::string& basepath) {
     sysMemory = std::make_unique<memoryLoad>(basepath + "meminfo",
                                              basepath + "self/status",
                                              basepath + "self/");
-    cpu->initMultiCore();
-    cpu->initcpuUsage();
+    cpu->initCpuUsage();
     this->sysEthernet_v = networkLoad::createLinuxEthernetScanList(basepath + "net/dev");
 }
 
@@ -64,7 +63,7 @@ linuxmonitoring_data::DataLinuxmonitoring linuxsysmonitor::getlinuxSysMonitoring
 
 
     linuxDataModel.get_mutable_linuxsystemmonitoring().get_mutable_cpu().set_multi_core(cpuUsage);
-    linuxDataModel.get_mutable_linuxsystemmonitoring().get_mutable_cpu().set_num_of_cores(cpu->getCores());
+    linuxDataModel.get_mutable_linuxsystemmonitoring().get_mutable_cpu().set_num_of_cores(cpu->getCurrentMultiCoreUsage().size());
     linuxDataModel.get_mutable_linuxsystemmonitoring().get_mutable_cpu().set_cpu_type(cpu->getCPUName());
 
 
@@ -72,12 +71,23 @@ linuxmonitoring_data::DataLinuxmonitoring linuxsysmonitor::getlinuxSysMonitoring
     for (const auto& elem : this->sysEthernet_v) {
         linuxmonitoring_data::Linuxethernet obj;
         obj.set_i_face(elem->getDeviceName());
-        obj.set_bytes_total_per_second(networkLoad::getBytesPerSeceondString(elem->getBytesPerSecond()));
-        obj.set_bytes_total(elem->getBytesSinceStartup());
-        obj.set_bytes_rx_second(networkLoad::getBytesPerSeceondString(elem->getRXBytesPerSecond()));
-        obj.set_bytes_rx_total(elem->getRXBytesSinceStartup());
-        obj.set_bytes_tx_second(networkLoad::getBytesPerSeceondString(elem->getTXBytesPerSecond()));
-        obj.set_bits_rx_second(networkLoad::getBitsPerSeceondString(elem->getRXBytesPerSecond()));
+        obj.set_bytes_total_per_second(networkLoad::getBytesPerSeceondString(
+                elem->getParamSinceStartup(networkLoad::mapEnumToString(networkLoad::RXbytes)) +
+                elem->getParamSinceStartup(networkLoad::mapEnumToString(networkLoad::TXbytes))));
+        obj.set_bytes_total(elem->getParamSinceStartup(networkLoad::mapEnumToString(networkLoad::RXbytes)) +
+                        elem->getParamSinceStartup(networkLoad::mapEnumToString(networkLoad::TXbytes)));
+
+        obj.set_bytes_rx_second(networkLoad::getBytesPerSeceondString(
+                elem->getParamPerSecond(networkLoad::mapEnumToString(networkLoad::RXbytes))));
+        obj.set_bytes_rx_total(
+                elem->getParamSinceStartup(networkLoad::mapEnumToString(networkLoad::RXbytes)));
+
+        obj.set_bytes_tx_second(networkLoad::getBytesPerSeceondString(
+                elem->getParamPerSecond(networkLoad::mapEnumToString(networkLoad::TXbytes))));
+        obj.set_bytes_tx_total(
+                elem->getParamSinceStartup(networkLoad::mapEnumToString(networkLoad::TXbytes)));
+
+
         linuxDataModel.get_mutable_linuxsystemmonitoring().get_mutable_linuxethernet().push_back(obj);
     }
 

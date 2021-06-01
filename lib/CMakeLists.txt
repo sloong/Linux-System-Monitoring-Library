@@ -10,6 +10,7 @@ add_library(linuxmonitoring SHARED
             ${CMAKE_CURRENT_LIST_DIR}/linux_networkload.cpp
             ${CMAKE_CURRENT_LIST_DIR}/linux_systemutil.cpp
             ${CMAKE_CURRENT_LIST_DIR}/linux_cpuload.cpp
+            ${CMAKE_CURRENT_LIST_DIR}/linux_process_load.cpp
             ${CMAKE_CURRENT_LIST_DIR}/util/timer.cpp)
 target_compile_options(linuxmonitoring PRIVATE ${COMPILER_SETTINGS})
 

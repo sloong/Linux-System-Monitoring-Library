@@ -34,7 +34,7 @@
             if ( websocket && websocket.readyState == 1 )
                 websocket.close();
 
-            var wsUri = "wss://" + document.getElementById("webSocketHost").value;
+            var wsUri = "ws://" + document.getElementById("webSocketHost").value;
             websocket = new WebSocket( wsUri );
 
             websocket.onopen = function (evt) {

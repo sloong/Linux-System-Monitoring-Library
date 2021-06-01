@@ -18,9 +18,127 @@
 #include <cstring>
 #include <utility>
 
+const std::list<std::string> identifiers{"RXbytes",
+                                             "RXpackets",
+                                             "RXerrs",
+                                             "RXdrop",
+                                             "RXfifo",
+                                             "RXframe",
+                                             "RXcompressed",
+                                             "RXmulticast",
+                                             "TXbytes",
+                                             "TXpackets",
+                                             "TXerrs",
+                                             "TXdrop",
+                                             "TXfifo",
+                                             "TXcolls",
+                                             "TXcarrier",
+                                             "TXcompressed"
+};
+
+std::string networkLoad::mapEnumToString(networkLoad::networkParam param) {
+    auto it = identifiers.begin();
+    std::advance(it,static_cast<uint32_t>(param));
+    return it->data();
+}
+
+
+std::shared_ptr<networkLoad::networkParser> networkLoad::networkParser::inst = nullptr;
 
 networkLoad::networkLoad(std::string ethernetDataFileName, std::string ethName) : ethernetDataFile(std::move(ethernetDataFileName)), ethDev(std::move(ethName)) {
-    this->initNetworkMonitor();
+    networkParser::getNetworkParser()->parse(ethernetDataFileName);
+}
+
+void networkLoad::networkParser::parse(const std::string& netFile) {
+
+    if((this->currentTime + std::chrono::milliseconds(1000)) > std::chrono::system_clock::now()) {
+        return;
+    } else {
+        this->timeBefore = this->currentTime;
+        this->currentTime = std::chrono::system_clock::now();
+    }
+
+    std::ifstream ethFile;
+
+    try {
+        ethFile.open(netFile);
+    } catch (std::ifstream::failure &e) {
+        throw std::runtime_error("Exception: "+ netFile + std::string(e.what()));
+    }
+
+    this->timeBefore = std::chrono::system_clock::now();
+    this->ethObjOld = this->ethObj;
+
+    uint32_t lineCnt = 0;
+    for(std::string line; std::getline(ethFile, line); lineCnt++) {
+        if(lineCnt < 2) {
+            continue;
+        }
+        std::stringstream strStream(line);
+        std::string strPart;
+        std::string ifName = "";
+        std::unordered_map<std::string, uint64_t> ifValues;
+        auto it = identifiers.begin();
+        while(strStream >> strPart) {
+            if(ifName.empty()) {
+                strPart.erase(std::remove_if(strPart.begin(),strPart.end(),[](auto c) {
+                    return !std::isalnum(c);
+                }), strPart.end());
+                ifName = strPart;
+            } else {
+                if(it != identifiers.end()) {
+                    ifValues[it->data()] = std::stoull(strPart);
+                }
+                it++;
+            }
+        }
+        this->ethObj[ifName] = ifValues;
+    }
+    if(this->ethObjOld.empty()) {
+        this->ethObjOld = this->ethObj;
+    }
+}
+
+const std::unordered_map<std::string, uint64_t>
+&networkLoad::networkParser::getEthObj(const std::string& ethDevice) const {
+    return this->ethObj.at(ethDevice);
+}
+
+const std::unordered_map<std::string, uint64_t> &
+networkLoad::networkParser::getEthObjOld(const std::string& ethDevice) const {
+    return this->ethObjOld.at(ethDevice);
+}
+
+
+std::list<std::string> networkLoad::networkParser::getNetworkDevices(std::string netFile) {
+    std::list<std::string> ifList;
+    this->parse(netFile);
+    for(const auto& elem: this->ethObj) {
+        ifList.push_back(elem.first);
+    }
+    return ifList;
+}
+
+networkLoad::networkParser::networkParser() {
+    this->currentTime = std::chrono::system_clock::now() - std::chrono::milliseconds (2000);
+    this->timeBefore = std::chrono::system_clock::now();
+}
+
+std::shared_ptr<networkLoad::networkParser> networkLoad::networkParser::getNetworkParser() {
+    if(networkLoad::networkParser::inst == nullptr) {
+        networkLoad::networkParser::inst = std::make_unique<networkLoad::networkParser>();
+    }
+    return networkLoad::networkParser::inst;
+}
+
+const std::chrono::system_clock::time_point networkLoad::networkParser::getTimeStamp() const {
+    return this->currentTime;
+}
+
+
+
+const std::chrono::system_clock::time_point networkLoad::networkParser::getTimeBefore() const {
+    return this->timeBefore;
 }
 
 
@@ -33,226 +151,10 @@ std::string networkLoad::getDeviceName() {
     return this->ethDev;
 }
 
-void networkLoad::initNetworkMonitor() {
-    this->timeBefore = std::chrono::steady_clock::now();
-    this->timeBefore_tx = std::chrono::steady_clock::now();
-    this->timeBefore_rx = std::chrono::steady_clock::now();
-    this->parseEthernetDevice();
-    try {
-        this->m_totalTransceivedBytes = std::stoull(this->networkstatMap["RXbytes"], nullptr, 10);
-        this->m_totalTransceivedBytes += std::stoull(this->networkstatMap["TXbytes"], nullptr, 10);
-        this->m_totalTransmittedBytes = this->getTXBytesSinceStartup();
-        this->m_totalReceivedBytes = this->getRXBytesSinceStartup();
-    } catch (std::exception &e) {
-        e.what();
-    }
-}
-
-uint64_t networkLoad::parseEthernetDevice() {
-
-
-    if(this->timeStamp + std::chrono::milliseconds(1000) > std::chrono::steady_clock::now()) {
-        return 0;
-    } else {
-        this->timeStamp = std::chrono::steady_clock::now();
-    }
-
-
-    std::ifstream ethernetFile;
-    try {
-        ethernetFile.open(this->ethernetDataFile);
-    } catch (std::ifstream::failure &e) {
-        throw std::runtime_error("Exception: " +this->ethernetDataFile + std::string(e.what()));
-    }
-
-
-    if (!ethernetFile.is_open()) {
-        return 0;
-    }
-
-    std::string line;
-    std::list<std::string> identifiers{"RXbytes",
-                                       "RXpackets",
-                                       "RXerrs",
-                                       "RXdrop",
-                                       "RXfifo",
-                                       "RXframe",
-                                       "RXcompressed",
-                                       "RXmulticast",
-                                       "TXbytes",
-                                       "TXpackets",
-                                       "TXerrs",
-                                       "TXdrop",
-                                       "TXfifo",
-                                       "TXcolls",
-                                       "TXcarrier",
-                                       "TXcompressed"
-    };
-
-    std::map<std::string, std::string>::iterator it;
-    it = this->networkstatMap.find(std::string("IF"));
-    if (it == this->networkstatMap.end()) {
-        this->networkstatMap.insert(std::pair<std::string, std::string>(std::string("IF"), this->ethDev));
-    }
-    while (std::getline(ethernetFile, line)) {
-        std::string str_line(line);
-        auto lit = identifiers.begin();
-        if ((str_line.find(this->networkstatMap["IF"])) != std::string::npos) {
-            std::string line_;
-            std::istringstream ss(str_line);
-            this->isDeviceAvailable = true;
-            while (std::getline(ss, line_, ' ')) {
-                try {
-                    uint64_t parsedULL = std::stoull(line_, nullptr, 10);
-                    if (lit != identifiers.end()) {
-                        it = networkstatMap.find(*lit);
-                        if (it == networkstatMap.end()) {
-                            networkstatMap.insert(std::pair<std::string, std::string>(*lit,
-                                    std::to_string(parsedULL)));
-                        } else {
-                            it->second = std::to_string(parsedULL);
-                        }
-                        lit++;
-                    }
-                } catch (std::exception &e) {
-                    e.what();
-                }
-            }
-            break;
-        }
-    }
-    ethernetFile.close();
-
-    return 0;
-}
-
 std::list<std::string> networkLoad::scanNetworkDevices(const std::string& ethernetDataFile) {
 
-    std::list<std::string> netWorkDevices;
-    std::ifstream ethernetFile;
-    try {
-        ethernetFile.open(ethernetDataFile);
-    } catch (std::ifstream::failure &e) {
-        throw std::runtime_error("Exception: "+ ethernetDataFile + std::string(e.what()));
-    }
-
-    if (!ethernetFile.is_open()) {
-        return netWorkDevices;
-    }
-    std::string line;
-    while (std::getline(ethernetFile, line)) {
-        size_t pos;
-        if ((pos = line.find(":")) != std::string::npos) {
-            std::string ifDev = line.substr(0, pos);
-            ifDev.erase(std::remove(ifDev.begin(), ifDev.end(), ' '), ifDev.end());
-            netWorkDevices.push_back(ifDev);
-        }
-    }
-    return netWorkDevices;
-}
-
-uint64_t networkLoad::getTXBytesPerSecond() {
-    uint64_t oldBytesTransceived = this->m_totalTransmittedBytes;
-
-    std::chrono::time_point<std::chrono::steady_clock> oldclock = this->timeBefore_tx;
-
-    this->parseEthernetDevice();
-    this->m_totalTransmittedBytes = this->getTXBytesSinceStartup();
-
-    this->timeBefore_tx = std::chrono::steady_clock::now();
-    std::chrono::milliseconds msec = std::chrono::duration_cast<std::chrono::milliseconds> ( this->timeBefore_tx - oldclock);
-
-    uint64_t Bytes = this->m_totalTransmittedBytes - oldBytesTransceived;
-    Bytes *= 1000;
-    if (static_cast<unsigned long>(msec.count()) <= 0) {
-        Bytes /= 1;
-    } else {
-        Bytes /= static_cast<unsigned long>(msec.count());
-    }
-    return Bytes;
-}
-
-uint64_t networkLoad::getRXBytesPerSecond() {
-    uint64_t oldBytesTransceived = this->m_totalReceivedBytes;
-    std::chrono::time_point<std::chrono::steady_clock> oldclock = this->timeBefore_rx;
-
-    this->parseEthernetDevice();
-    this->m_totalReceivedBytes = this->getRXBytesSinceStartup();
-
-    this->timeBefore_rx = std::chrono::steady_clock::now();
-    std::chrono::milliseconds msec = std::chrono::duration_cast<std::chrono::milliseconds> (this->timeBefore_rx - oldclock);
-
-    uint64_t Bytes = this->m_totalReceivedBytes - oldBytesTransceived;
-    Bytes *= 1000;
-    if (static_cast<unsigned long>(msec.count()) <= 0) {
-        Bytes /= 1;
-    } else {
-        Bytes /= static_cast<unsigned long>(msec.count());
-    }
-    return Bytes;
-}
-
-uint64_t networkLoad::getRXBytesSinceStartup() {
-    this->parseEthernetDevice();
-    uint64_t transceivedBytes = 0;
-    try {
-        transceivedBytes += std::stoull(this->networkstatMap["TXbytes"], nullptr, 10);
-    } catch (std::exception &e) {
-        e.what();
-        transceivedBytes = 0;
-    }
-    return transceivedBytes;
-}
-
-uint64_t networkLoad::getTXBytesSinceStartup() {
-    this->parseEthernetDevice();
-    uint64_t transceivedBytes = 0;
-    try {
-        transceivedBytes += std::stoull(this->networkstatMap["RXbytes"], nullptr, 10);
-    } catch (std::exception &e) {
-        e.what();
-        transceivedBytes = 0;
-    }
-    return transceivedBytes;
-}
-
-uint64_t networkLoad::getBytesPerSecond() {
-    uint64_t oldBytesTransceived = this->m_totalTransceivedBytes;
-    std::chrono::time_point<std::chrono::steady_clock> oldclock = this->timeBefore;
-
-    this->parseEthernetDevice();
-    try {
-        this->m_totalTransceivedBytes = std::stoull(this->networkstatMap["RXbytes"], nullptr, 10);
-        this->m_totalTransceivedBytes += std::stoull(this->networkstatMap["TXbytes"], nullptr, 10);
-    } catch (std::exception &e) {
-        e.what();
-        return 0;
-    }
-    this->timeBefore = std::chrono::steady_clock::now();
-    std::chrono::milliseconds msec = std::chrono::duration_cast<std::chrono::milliseconds> (this->timeBefore - oldclock);
-
-    uint64_t Bytes = this->m_totalTransceivedBytes - oldBytesTransceived;
-    Bytes *= 1000;
-    if (static_cast<unsigned long>(msec.count()) <= 0) {
-        Bytes /= 1;
-    } else {
-        Bytes /= static_cast<unsigned long>(msec.count());
-    }
-    return Bytes;
-}
-
-uint64_t networkLoad::getBytesSinceStartup() {
-    this->parseEthernetDevice();
-    uint64_t transceivedBytes = 0;
-    try {
-        transceivedBytes = std::stoull(this->networkstatMap["RXbytes"], nullptr, 10);
-        transceivedBytes += std::stoull(this->networkstatMap["TXbytes"], nullptr, 10);
-    } catch (std::exception &e) {
-        e.what();
-        transceivedBytes = 0;
-    }
-    return transceivedBytes;
-
+    auto parser = networkParser::getNetworkParser();
+    return parser->getNetworkDevices(ethernetDataFile);
 }
 
 std::string networkLoad::getBytesPerSeceondString(uint64_t bytesPerSecond) {
@@ -309,13 +211,10 @@ std::string networkLoad::getBytesString(uint64_t totalBytes) {
         return net;
     }
 
-    if (Bytes > 0) {
-        std::string net;
-        net += std::to_string(Bytes);
-        net += "Byte";
-        return net;
-    }
-    return "undef";
+    std::string net;
+    net += std::to_string(Bytes);
+    net += "Byte";
+    return net;
 }
 
 std::string networkLoad::getBitsString(uint64_t totalBytes) {
@@ -364,12 +263,44 @@ std::string networkLoad::getBitsString(uint64_t totalBytes) {
         return net;
     }
 
-    if (Bytes > 0) {
-        std::string net;
-        net += std::to_string(Bytes);
-        net += "Bit";
-        return net;
+
+    std::string net;
+    net += std::to_string(Bytes);
+    net += "Bit";
+    return net;
+}
+
+uint64_t networkLoad::getParamPerSecond(std::string designator) {
+    networkParser::getNetworkParser()->parse(this->ethernetDataFile);
+    if(!std::count_if(identifiers.begin(),identifiers.end(),[designator](auto elem) {
+        return elem == designator;
+    })) {
+        throw std::runtime_error("invalid designator: " + designator);
     }
-    return "undef";
+    auto before = networkParser::getNetworkParser()->getTimeBefore();
+    auto current = networkParser::getNetworkParser()->getTimeStamp();
+
+    auto msec = std::chrono::duration_cast<std::chrono::milliseconds> (
+            before - current);
+
+    uint64_t Bytes = (networkParser::getNetworkParser()->getEthObj(this->ethDev).at(designator) -
+            networkParser::getNetworkParser()->getEthObjOld(this->ethDev).at(designator));
+    if (static_cast<unsigned long>(msec.count()) <= 0) {
+        Bytes /= 1;
+    } else {
+        Bytes /= static_cast<unsigned long>(msec.count());
+    }
+    return Bytes;
+}
+
+uint64_t networkLoad::getParamSinceStartup(std::string designator) {
+    networkParser::getNetworkParser()->parse(this->ethernetDataFile);
+    auto ifObj = networkParser::getNetworkParser()->getEthObj(this->ethDev);
+    if(!std::count_if(identifiers.begin(),identifiers.end(),[designator](auto elem) {
+        return elem == designator;
+    })) {
+        throw std::runtime_error("invalid designator: " + designator);
+    }
+    return ifObj[designator];
 }
 
