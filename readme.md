@@ -21,6 +21,10 @@ The library consists of STL and c++17 only! no thirdparty library is used (excep
   * Total Memory
   * Memory Usage per Process
 
+* Process Usage:
+  * CPU Usage per Process
+  * Memory Usage per Process
+
   
 * Linux Utils and Features:
   * is remote Device Online - (parse Ping response)
