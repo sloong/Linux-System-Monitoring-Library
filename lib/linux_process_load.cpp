@@ -120,7 +120,7 @@ void linuxProcessLoad::findProcesses() {
     for(auto& elem: std::filesystem::directory_iterator(path)) {
         auto procPath = elem.path().string();
         if(elem.exists()) {
-            procPath.erase(procPath.begin(), procPath.begin() + static_cast<uint32_t >(path.size()));
+            procPath.erase(procPath.begin(), procPath.begin() + static_cast<int32_t >(path.size()));
             if (std::isdigit(procPath.at(0))) {
                 if (!std::count_if(procPath.begin(), procPath.end(), [](auto c) {
                     return std::isalpha(c);

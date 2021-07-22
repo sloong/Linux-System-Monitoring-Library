@@ -10,7 +10,7 @@
 #include <cmath>
 #include <fstream>
 #include <iostream>
-
+#include <cinttypes>
 bool memoryLoad::parseMemoryFile() {
     if(timeStamp + std::chrono::milliseconds(100) > std::chrono::steady_clock::now()) {
         return true;
@@ -24,8 +24,8 @@ bool memoryLoad::parseMemoryFile() {
 
     std::string line;
     while (std::getline(memoryFile, line)) {
-        sscanf(line.c_str(), "MemTotal: %lu", &this->totalMemoryInKB);
-        sscanf(line.c_str(), "MemAvailable: %lu", &this->currentMemoryUsageInKB);
+        sscanf(line.c_str(), "MemTotal: %" PRIu64, &this->totalMemoryInKB);
+        sscanf(line.c_str(), "MemAvailable: %" PRIu64, &this->currentMemoryUsageInKB);
     }
     memoryFile.close();
     return true;
@@ -61,7 +61,7 @@ uint64_t memoryLoad::parseProcessMemoryFile(std::string fileToParse) {
     memoryFile.open(fileToParse);
     std::string line;
     while (std::getline(memoryFile, line)) {
-        sscanf(line.c_str(), "VmSize: %lu", &MemFree);
+        sscanf(line.c_str(), "VmSize: %" PRIu64, &MemFree);
     }
     return MemFree;
 }

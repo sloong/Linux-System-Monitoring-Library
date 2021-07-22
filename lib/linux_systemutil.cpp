@@ -21,7 +21,7 @@
 #include <thread>
 
 #include "linux_systemutil.hpp"
-
+#include <cinttypes>
 
 int64_t linuxUtil::getTemperature(const std::string &thermalZone) {
     std::ifstream temperatureFile;
@@ -39,7 +39,7 @@ int64_t linuxUtil::getTemperature(const std::string &thermalZone) {
 
 int linuxUtil::getProcIdByName(const std::string &procName) {
     int pid = -1;
-    DIR *dp = opendir("/proc");
+    auto dp = opendir("/proc");
     if (dp != nullptr) {
         struct dirent *dirp;
         while (pid < 0 && (dirp = readdir(dp))) {
@@ -93,7 +93,7 @@ uint64_t linuxUtil::getSysUpTime() {
     uint64_t sysUptime = 0;
     std::string line;
     while (std::getline(upTimeFile, line)) {
-        sscanf(line.c_str(), "%lu %lu", &sysUptime, &beforeBootTime);
+        sscanf(line.c_str(), "%" PRIu64 "%" PRIu64, &sysUptime, &beforeBootTime);
     }
     upTimeFile.close();
     return sysUptime;
@@ -140,11 +140,11 @@ uint64_t linuxUtil::getFreeDiskSpace(std::string absoluteFilePath) {
 
     if (!statvfs(absoluteFilePath.c_str(), &buf)) {
         uint64_t blksize, blocks, freeblks, disk_size, used, free;
-        printf("blksize :  %ld\n", buf.f_bsize);
-        printf("blocks :  %ld\n", buf.f_blocks);
-        printf("bfree :  %ld\n", buf.f_bfree);
-        printf("bavail: %ld\n", buf.f_bavail);
-        printf("f_frsize:%ld\n", buf.f_frsize);
+        std::cout << "blksize :" <<  buf.f_bsize << std::endl;
+        std::cout << "blocks :  " <<  buf.f_blocks;
+        std::cout << "bfree :  " << buf.f_bfree;
+        std::cout << "bavail: " << buf.f_bavail;
+        std::cout << "f_frsize: " <<  buf.f_frsize;
         blksize = buf.f_bsize;
         blocks = buf.f_blocks;
         freeblks = buf.f_bfree;
@@ -152,7 +152,11 @@ uint64_t linuxUtil::getFreeDiskSpace(std::string absoluteFilePath) {
         free = freeblks * blksize;
         used = disk_size - free;
 
-        printf("disk %s disksize: %lu free %lu used %lu\n", absoluteFilePath.c_str(), disk_size, free, used);
+        std::cout   << "disk " << absoluteFilePath
+                    << " disksize: " << disk_size
+                    << " free: " << free
+                    << " used: " << used
+                    << std::endl;
         return free;
     } else {
         return 0;
@@ -164,7 +168,7 @@ uint64_t linuxUtil::userAvailableFreeSpace() {
     struct statvfs stat;
     struct passwd *pw = getpwuid(getuid());
     if (nullptr != pw && 0 == statvfs(pw->pw_dir, &stat)) {
-        printf("path %s\n", pw->pw_dir);
+        std::cout << "path " <<  pw->pw_dir << std::endl;
         uint64_t freeBytes = stat.f_bavail * stat.f_frsize;
         return freeBytes;
     }
