@@ -56,11 +56,13 @@ find the library in the folder `lib` of the `build` folder
 find the executable in the folder `bin` of the `build` folder
 
 #### build linuxsystem websocket service (thirdparty dependencies needed):
+with the flag `USE_THIRDPARTY_EXAMPLES` set to `ON` the examples with thirdparty libs can be built: 
+
 
     git submodule update --init --recursive
     mkdir build
     cd build
-    cmake ..
+    cmake .. -DUSE_THIRDPARTY_EXAMPLES=ON
     cmake --build . --target linuxsystemMonitor
     
 find the executable in the folder `bin` of the `build` folder

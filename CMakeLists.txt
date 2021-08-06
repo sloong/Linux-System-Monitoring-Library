@@ -31,23 +31,27 @@ set(COMPILER_SETTINGS
     )
 
 
-
+option(USE_THIRDPARTY_EXAMPLES "Use thirdparty examples" OFF)
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ")
 
-include_directories(thirdparty/cxxopts/include)
-include_directories(thirdparty/Catch2/single_include)
-include_directories(thirdparty/json/single_include/nlohmann)
-include_directories(thirdparty/json/single_include)
-include_directories(thirdparty/uWebSockets/uSockets/src)
-include_directories(thirdparty/uWebSockets/src)
-link_directories(${CMAKE_CURRENT_LIST_DIR}/thirdparty/uWebSockets/uSockets)
-include_directories(${CMAKE_CURRENT_LIST_DIR}/thirdparty/uWebSockets/uSockets)
-
+if (USE_THIRDPARTY_EXAMPLES)
+    include_directories(thirdparty/cxxopts/include)
+    include_directories(thirdparty/Catch2/single_include)
+    include_directories(thirdparty/json/single_include/nlohmann)
+    include_directories(thirdparty/json/single_include)
+    include_directories(thirdparty/uWebSockets/uSockets/src)
+    include_directories(thirdparty/uWebSockets/src)
+    link_directories(${CMAKE_CURRENT_LIST_DIR}/thirdparty/uWebSockets/uSockets)
+    include_directories(${CMAKE_CURRENT_LIST_DIR}/thirdparty/uWebSockets/uSockets)
+endif()
 
 
 include(${CMAKE_CURRENT_LIST_DIR}/lib/CMakeLists.txt)
-include(${CMAKE_CURRENT_LIST_DIR}/tests/CMakeLists.txt)
-include(${CMAKE_CURRENT_LIST_DIR}/example/LinuxSystemMonitor_WebsocketService/CMakeLists.txt)
+if (USE_THIRDPARTY_EXAMPLES)
+    include(${CMAKE_CURRENT_LIST_DIR}/tests/CMakeLists.txt)
+    include(${CMAKE_CURRENT_LIST_DIR}/example/LinuxSystemMonitor_WebsocketService/CMakeLists.txt)
+    include(${CMAKE_CURRENT_LIST_DIR}/example/threadedpinger/CMakeLists.txt)
+endif()
+
 include(${CMAKE_CURRENT_LIST_DIR}/example/simplemonitor/CMakeLists.txt)
-include(${CMAKE_CURRENT_LIST_DIR}/example/threadedpinger/CMakeLists.txt)
