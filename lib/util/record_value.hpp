@@ -22,10 +22,23 @@ public:
     recordValue(std::chrono::system_clock::duration observTime, std::chrono::system_clock::duration upDateTime)
             : stepSize(
             static_cast<uint64_t>(observTime / upDateTime)), firstTime(true) {
+        if(stepSize == 0) {
+            throw std::runtime_error("stepsize is 0 -- not allowed: observTime: "
+            + std::to_string(observTime.count())
+            + " upDateTime: "
+            + std::to_string(upDateTime.count()));
+        }
         this->recordContainer.resize(stepSize);
     };
 
-    explicit recordValue(uint64_t stepSize_) : stepSize(stepSize_), firstTime(true) { this->recordContainer.resize(stepSize); };
+    explicit recordValue(uint64_t stepSize_) : stepSize(stepSize_), firstTime(true) {
+        if(stepSize_ == 0) {
+            throw std::runtime_error("stepsize is 0 -- not allowed!");
+        }
+        this->recordContainer.resize(stepSize);
+    };
+
+    recordValue() = delete;
 
     void addRecord(const T &rec) {
         this->recordContainer.push_back(rec);
