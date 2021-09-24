@@ -36,11 +36,18 @@ class cpuLoad
 
 public:
     cpuLoad() = delete;
+
+    static shared_ptr<cpuLoad> createInstance(std::string procFileName = "/proc/stat"){
+        return make_shared<cpuLoad>(procFileName);
+    }
+
     /**
      * @brief constructor
      * @param procFileName
      */
-    explicit cpuLoad(std::string procFileName = "/proc/stat") : procFile(std::move(procFileName)), cpuName(""){};
+    explicit cpuLoad(std::string procFileName = "/proc/stat") : procFile(procFileName), cpuName(""){
+        initCpuUsage();
+    };
 
     /**
      * @brief initialize the parsing algo

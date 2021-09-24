@@ -175,7 +175,7 @@ public:
         return v;
     }
 
-    explicit networkLoad(std::shared_ptr<networkParser> parser = nullptr,std::string ethernetDataFileName = "/proc/net/dev", std::string ethName = "eth0") : ethernetDataFile(std::move(ethernetDataFileName)), ethDev(std::move(ethName))
+    explicit networkLoad(std::shared_ptr<networkParser> parser = nullptr, std::string ethernetDataFileName = "/proc/net/dev", std::string ethName = "eth0") : ethernetDataFile(std::move(ethernetDataFileName)), ethDev(std::move(ethName))
     {
         if (parser == nullptr)
             parser = networkParser::createNetworkParser();
@@ -210,7 +210,7 @@ public:
         return Bytes;
     }
 
-    uint64_t getParamSinceStartup(std::string designator,std::shared_ptr<networkParser> parser = nullptr)
+    uint64_t getParamSinceStartup(std::string designator, std::shared_ptr<networkParser> parser = nullptr)
     {
         if (parser == nullptr)
             parser = networkParser::createNetworkParser();
