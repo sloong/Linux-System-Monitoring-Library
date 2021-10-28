@@ -48,9 +48,10 @@ class cpuLoad
      */
     void initCpuUsage()
     {
-        this->cpuLoadMap = this->parseStatFile(this->procFile);
+        unique_lock<mutex> lck(lock);
+        this->cpuLoadMap = this->_parseStatFile(this->procFile);
         this->currentTime = std::chrono::system_clock::now() - std::chrono::milliseconds(2000);
-        this->upDateCPUUsage();
+        this->_upDateCPUUsage();
     }
     /**
      * @brief get current cpu load in 0-100%
@@ -58,7 +59,8 @@ class cpuLoad
      */
     double getCurrentCpuUsage()
     {
-        this->upDateCPUUsage();
+        unique_lock<mutex> lck(lock);
+        this->_upDateCPUUsage();
         return this->cpuUsage.at("cpu");
     }
 
@@ -69,7 +71,8 @@ class cpuLoad
      */
     std::tuple<uint64_t, uint64_t, uint64_t, uint64_t> getCpuTimes()
     {
-        auto cpuLoad_ = this->parseStatFile(this->procFile);
+        unique_lock<mutex> lck(lock);
+        auto cpuLoad_ = this->_parseStatFile(this->procFile);
         return std::make_tuple(cpuLoad_.at("cpu").at("user"), cpuLoad_.at("cpu").at("nice"),
                                cpuLoad_.at("cpu").at("system"), cpuLoad_.at("cpu").at("idle"));
     }
@@ -80,7 +83,8 @@ class cpuLoad
      */
     std::vector<double> getCurrentMultiCoreUsage()
     {
-        this->upDateCPUUsage();
+        unique_lock<mutex> lck(lock);
+        this->_upDateCPUUsage();
         std::vector<double> percents;
         for (const auto &elem : this->cpuUsage)
         {
@@ -99,7 +103,7 @@ class cpuLoad
      */
     std::string getCPUName(const std::string &cpuNameFile = "/proc/cpuinfo")
     {
-
+        unique_lock<mutex> lck(lock);
         if (!this->cpuName.empty())
         {
             return this->cpuName;
@@ -129,7 +133,7 @@ class cpuLoad
     }
 
   private:
-    void calculateCpuUsage()
+    void _calculateCpuUsage()
     {
         try
         {
@@ -156,10 +160,14 @@ class cpuLoad
         }
         catch (const std::exception &e)
         {
-            cerr << "calculateCpuUsage" << e.what() << endl;
+            cerr << "_calculateCpuUsage" << e.what() << endl;
+        }
+        catch (...)
+        {
+            cerr << "_calculateCpuUsage unknown exception." << endl;
         }
     }
-    std::map<std::string, std::unordered_map<std::string, uint64_t>> parseStatFile(const std::string &fileName)
+    std::map<std::string, std::unordered_map<std::string, uint64_t>> _parseStatFile(const std::string &fileName)
     {
 
         std::map<std::string, std::unordered_map<std::string, uint64_t>> cpuLoad_;
@@ -215,16 +223,17 @@ class cpuLoad
         }
         return cpuLoad_;
     }
-    void upDateCPUUsage()
+    void _upDateCPUUsage()
     {
         if (!((this->currentTime + std::chrono::milliseconds(1000)) > std::chrono::system_clock::now()))
         {
             this->oldCpuLoadMap = this->cpuLoadMap;
             this->currentTime = std::chrono::system_clock::now();
-            this->cpuLoadMap = this->parseStatFile(this->procFile);
-            this->calculateCpuUsage();
+            this->cpuLoadMap = this->_parseStatFile(this->procFile);
+            this->_calculateCpuUsage();
         }
     }
+    std::mutex lock;
     std::chrono::system_clock::time_point currentTime;
     std::string procFile;
     std::string cpuName;
